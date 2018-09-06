@@ -24,22 +24,21 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
     def setup(self, camera_wh):
         ''' Initialize the instance variables '''
 
-        # flow variables
-        self.max_flow = camera_wh[0] / 16.0 * camera_wh[1] / 16.0 * 2**7
-        self.flow_scale = .165
-        self.flow_coeff = 100 * self.flow_scale / self.max_flow
-
-        # TODO initialize the altitude
+        # TODO: calculate and initilize the instance variables used to scale
+        #       the motion vectors
 
 
         # ROS setup:
         ############
         # Publisher:
-        # TODO: create a ROS publisher to publish the velocities as a TwistStamped
-        #       message to the topic /pidrone/picamera/twist
+        # TODO: create a ROS publisher to publish the velocities
+            # message type: TwistStamped
+            # topic: /pidrone/picamera/twist
         # Subscriber:
         # TODO: subscribe to /pidrone/state to extract altitude (z position) for
-        #       velocity calculations
+        #       scaling
+            # message type: State
+            # callback method: state_callback
 
     def analyse(self, a):
         ''' Analyze the frame, calculate the motion vectors, and publish the
@@ -47,14 +46,13 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
         AnalyzeFlow is set as the motion analyzer argument
 
         a : an array of the incoming motion data that is provided by the
-            PiMotionAnalysis api
+            PiMotionAnalysis API
         '''
         # signed 1-byte values
         x = a['x']
         y = a['y']
 
-        # TODO: calculate the velocities by summing the flow vectors and scaling
-        #       by the flow coefficient and altitude
+        # TODO: calculate the velocities by summing and scaling the flow vectors
 
         # TODO: Create a TwistStamped message, fill in the values you've calculated,
         #       and publish this using the publisher you've created in setup
@@ -64,3 +62,4 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
         """
         Store z position (altitude) reading from State
         """
+        pass

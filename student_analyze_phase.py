@@ -41,15 +41,15 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         # Subscribers:
         # TODO: subscribe to /pidrone/reset_transform
             # message type: Empty
-            # callback: reset_callback
+            # callback method: reset_callback
 
         # TODO: subscribe to /pidrone/position_control
             # message type: Bool
-            # callback: position_control_callback
+            # callback method: position_control_callback
 
         # TODO: subscribe to /pidrone/state
             # message type: State
-            # callback: state_callback
+            # callback method: state_callback
 
     def write(self, data):
         ''' A method that is called everytime an image is taken '''
@@ -81,15 +81,17 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         # publish the pose message
 
 
-    # normalize image
-    def translation_and_yaw(self, transform):
-        translation_x_y = [0 - float(transform[0, 2]) / 320,
-                            float(transform[1, 2]) / 240]
 
-        # yaw can be up to ~ 20 deg
-        yaw_scale = np.sqrt(transform[0, 0]**2 + transform[1, 0]**2)
-        yaw_y_x = [float(transform[1, 0]) / yaw_scale, float(transform[0, 0]) / yaw_scale]
-        yaw = np.arctan2(yaw_y_x[0], yaw_y_x[1])
+    # TODO: Implement this method to extract useful information from the affine transformation
+    def translation_and_yaw(self, transform):
+        """ Takes an affine transform and returns the x and y translations of
+        the camera and the yaw
+
+        transform : an affine transformation
+        """
+        translation_x_y = None
+
+        yaw = None
 
         return translation_x_y, yaw
 
@@ -101,14 +103,11 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         """ Reset the current position and orientation """
         print "Resetting Phase"
 
-        # reset position control variables
-        # reset first image variables
-        # reset the pose values
-        # reset the lost variable
 
 # TODO: Implement
     def position_control_callback(self, msg):
         ''' Store whether the pose is calculated and published '''
+        pass
 
 # TODO: Implement
     def state_callback(self, msg):
@@ -116,3 +115,4 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         Store z position (altitude) reading from State, along with most recent
         x and y position estimate
         """
+        pass
