@@ -50,7 +50,8 @@ class IR:
         """
         Here is where you will want to publish your IR range reading. You will publish a ROS Range message, which has
         already been imported for you. Fill in the header.stamp, max_range, min_range, range, and header.frame_id
-        fields of the message you publish. The header.frame_id field should be set to "base".
+        fields of the message you publish. The header.frame_id field should be set to "base". For more details on the
+        Range message, look at http://docs.ros.org/indigo/api/sensor_msgs/html/msg/Range.html
 
         :param range: The range/distance reading of the IR sensor
         """
@@ -73,15 +74,15 @@ def main():
 
     # ROS Setup
     ###########
-    # TODO: create a ros node
+    # TODO: initialize a ros node
 
     # TODO: instantiate your IR object
 
     # Publishers
     ############
-    # TODO: instantiate a range publisher and a heartbeat publisher. the range publisher should publish to the topic
-    # '/pidrone/infrared' while the heartbeat publisher should publish an Empty (another standard ROS type) message
-    # to the topic '/pidrone/heartbeat/infrared'. each sensor has a heartbeat publisher to ensure that the mode
+    # TODO: instantiate a range publisher and a heartbeat publisher. the range publisher should publish a Range message
+    # to the topic '/pidrone/infrared' while the heartbeat publisher should publish an Empty (another standard ROS type)
+    # message to the topic '/pidrone/heartbeat/infrared'. each sensor has a heartbeat publisher to ensure that the mode
     # controller knows which sensors are publishing their data without actually accessing the data itself. both
     # publishers should have a queue size of 1.
 

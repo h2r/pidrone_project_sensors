@@ -56,21 +56,21 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
 
         # Run the following only if position control is enabled to conserve computation resources
             # reshape the image
-            image = np.reshape(np.fromstring(data, dtype=np.uint8), (240, 320, 3))
+            ###image = np.reshape(np.fromstring(data, dtype=np.uint8), (240, 320, 3))
             # If no first image is stored
                 # update the image variables
 
             # else
                 # try to estimate the transformation from the first image to the
                 # current image to get a position estimate.
-                transform_first = cv2.estimateRigidTransform(self.first_image, image, False)
+                ###transform_first = cv2.estimateRigidTransform(self.first_image, image, False)
 
                 # if the first image was visible (the transformation was succesful) :
                     # calculate the x,y, and yaw from the transformation
                     # update first image data
                 # else the first image was not visible (the transformation was not succesful) :
                     # try to estimate the transformation from the previous image
-                    transform_previous = cv2.estimateRigidTransform(self.previous_image, image, False)
+                    ###transform_previous = cv2.estimateRigidTransform(self.previous_image, image, False)
 
                     # if the previous image was visible (the transformation was succesful)
                         # calculate the position by integrating

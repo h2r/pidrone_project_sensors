@@ -27,13 +27,14 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
         # TODO: calculate and initilize the instance variables used to scale
         #       the motion vectors
 
-
         # ROS setup:
         ############
         # Publisher:
         # TODO: create a ROS publisher to publish the velocities
             # message type: TwistStamped
             # topic: /pidrone/picamera/twist
+            # note: ensure that you pass in the argument queue_size=1 to the
+            #       publisher to avoid lag
         # Subscriber:
         # TODO: subscribe to /pidrone/state to extract altitude (z position) for
         #       scaling
@@ -53,6 +54,7 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
         y = a['y']
 
         # TODO: calculate the velocities by summing and scaling the flow vectors
+        #       using the flow_coeff and the altitude
 
         # TODO: Create a TwistStamped message, fill in the values you've calculated,
         #       and publish this using the publisher you've created in setup
@@ -63,3 +65,38 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
         Store z position (altitude) reading from State
         """
         pass
+
+
+def main():
+    import sys
+    import os
+    from cv_bridge import CvBridge
+
+    node_name = os.path.splitext(os.path.basename(__file__))[0]
+    rospy.init_node(node_name)
+
+    print "Analyze flow started"
+
+    try:
+        bridge = CvBridge()
+
+        with picamera.PiCamera(framerate=90) as camera:
+            camera.resolution = (320, 240)
+            with AnalyzeFlow(camera) as flow_analyzer:
+                flow_analyzer.setup(camera.resolution)
+                camera.start_recording("/dev/null", format='h264', motion_output=flow_analyzer)
+
+                while not rospy.is_shutdown():
+                    camera.wait_recording(1/100.0)
+            camera.stop_recording()
+
+        print "Shutdown Received"
+        sys.exit()
+
+    except Exception as e:
+        print "Camera Error!"
+        raise
+
+
+if __name__ == '__main__':
+    main()
