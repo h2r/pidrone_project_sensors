@@ -24,8 +24,12 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
     def setup(self, camera_wh):
         ''' Initialize the instance variables '''
 
-        # TODO: calculate and initilize the instance variables used to scale
-        #       the motion vectors
+        # initilize the instance variables used to scale the motion vectors
+        self.max_flow = camera_wh[0] / 16.0 * camera_wh[1] / 16.0 * 2**7
+        self.flow_scale = .165
+        self.flow_coeff = 100 * self.flow_scale / self.max_flow # (multiply by 100 for cm to m conversion)
+
+        self.altitude = 0.0
 
         # ROS setup:
         ############
