@@ -1,4 +1,5 @@
 import sys
+sys.path.insert(0, '/home/pi/ws/src/pidrone_pkg/scripts')
 import os
 import rospy
 import picamera
