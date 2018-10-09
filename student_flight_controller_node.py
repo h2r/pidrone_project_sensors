@@ -81,14 +81,14 @@ class FlightController(object):
         #       self.board
 
         # calculate values to update imu_message:
-        # TODO: extract roll, pitch, heading and convert to radians using np.deg2rad
+        # TODO: extract roll, pitch, yaw and convert to radians using np.deg2rad
 
-        # transform heading (similar to yaw) to standard math conventions, which
+        # transform yaw (similar to yaw) to standard math conventions, which
         # means angles are in radians and positive rotation is CCW
-        heading = (-heading) % (2 * np.pi)
+        yaw = (-yaw) % (2 * np.pi)
 
         # transform euler angles into quaternion
-        quaternion = tf.transformations.quaternion_from_euler(roll, pitch, heading)
+        quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
 
         # calculate the linear accelerations
         lin_acc_x = self.board.rawIMU['ax'] * self.accRawToMss - self.accZeroX
@@ -116,10 +116,10 @@ class FlightController(object):
         lin_acc_z_drone_body = lin_acc_z_drone_body + g*(1 - np.cos(roll)*np.cos(pitch))
 
         ######### Calculate the angular rates ###########
-        # get the previous roll, pitch, heading values
+        # get the previous roll, pitch, yaw values
         previous_quaternion = self.imu_message.orientation
         quaternion_array = [previous_quaternion.x, previous_quaternion.y, previous_quaternion.z, previous_quaternion.w]
-        previous_roll, previous_pitch, previous_heading = tf.transformations.euler_from_quaternion(quaternion_array)
+        previous_roll, previous_pitch, previous_yaw = tf.transformations.euler_from_quaternion(quaternion_array)
 
         # calculate the angular velocities of roll, pitch, and yaw in rad/s
         # TODO
