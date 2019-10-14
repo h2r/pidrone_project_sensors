@@ -59,8 +59,8 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
         y = a['y']
 
         # TODO: calculate the optical flow velocities by summing and scaling the flow vectors
-        opflow_x = ???
-        opflow_y = ???
+        opflow_x = None 
+        opflow_y = None 
         
         # Turn summed optical flow vectors into real-world velocities
         x_motion = opflow_x * self.flow_coeff * self.altitude
