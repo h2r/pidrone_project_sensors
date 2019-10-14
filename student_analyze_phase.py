@@ -34,7 +34,7 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
             # message type: PoseStamped
             # topic: /pidrone/picamera/pose
 
-        # TODO: create a publisher for the lost variable
+        # TODO: create a publisher that publishes a boolean indicating whether the drone is lost or not
             # message type: Bool
             # topic: /pidrone/picamera/lost
 
@@ -53,7 +53,8 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
             # callback method: state_callback
 
     def write(self, data):
-        ''' A method that is called everytime an image is taken '''
+        ''' A method that is called everytime an image is taken.
+            REMEMBER TO UNCOMMENT ALL LINES STARTING WITH ### '''
 
         # Run the following only if position control is enabled to conserve computation resources
             # reshape the image
@@ -88,7 +89,9 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         """ Takes an affine transform and returns the x and y translations of
         the camera and the yaw
 
-        transform : an affine transformation
+        transform : an affine transformation. Refer to the Sensors Theory assignment for more 
+        information about this matrix. You should use your answer to the theory assignment to 
+        help you here.
         """
         translation_x_y = None
 
