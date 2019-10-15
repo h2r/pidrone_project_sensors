@@ -53,26 +53,25 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
             # callback method: state_callback
 
     def write(self, data):
-        ''' A method that is called everytime an image is taken.
-            REMEMBER TO UNCOMMENT ALL LINES STARTING WITH ### '''
+        ''' A method that is called everytime an image is taken.'''
 
         # Run the following only if position control is enabled to conserve computation resources
             # reshape the image
-            ###image = np.reshape(np.fromstring(data, dtype=np.uint8), (240, 320, 3))
+            image = np.reshape(np.fromstring(data, dtype=np.uint8), (240, 320, 3))
             # If no first image is stored, store the image as the first image
                 # update the image variables
 
             # else
                 # try to estimate the transformation from the first image to the
                 # current image to get a position estimate.
-                ###transform_first = cv2.estimateRigidTransform(self.first_image, image, False)
+                transform_first = cv2.estimateRigidTransform(self.first_image, image, False)
 
                 # if the first image was visible (the transformation was succesful and transform_first is not None) :
                     # calculate the x,y, and yaw from the transformation
                     # update first image data
                 # else the first image was not visible (transform_first was None) :
                     # try to estimate the transformation from the previous image
-                    ###transform_previous = cv2.estimateRigidTransform(self.previous_image, image, False)
+                    transform_previous = cv2.estimateRigidTransform(self.previous_image, image, False)
 
                     # if the previous image was visible (transform_previous is not None)
                         # calculate the position by adding the displacement to the position 
