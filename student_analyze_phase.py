@@ -59,7 +59,7 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         # Run the following only if position control is enabled to conserve computation resources
             # reshape the image
             ###image = np.reshape(np.fromstring(data, dtype=np.uint8), (240, 320, 3))
-            # If no first image is stored
+            # If no first image is stored, store the image as the first image
                 # update the image variables
 
             # else
@@ -67,18 +67,20 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
                 # current image to get a position estimate.
                 ###transform_first = cv2.estimateRigidTransform(self.first_image, image, False)
 
-                # if the first image was visible (the transformation was succesful) :
+                # if the first image was visible (the transformation was succesful and transform_first is not None) :
                     # calculate the x,y, and yaw from the transformation
                     # update first image data
-                # else the first image was not visible (the transformation was not succesful) :
+                # else the first image was not visible (transform_first was None) :
                     # try to estimate the transformation from the previous image
                     ###transform_previous = cv2.estimateRigidTransform(self.previous_image, image, False)
 
-                    # if the previous image was visible (the transformation was succesful)
-                        # calculate the position by integrating
-                    # if the previous image wasn't visible (the transformation was not succesful)
+                    # if the previous image was visible (transform_previous is not None)
+                        # calculate the position by adding the displacement to the position 
+                        # of the drone in the previous image
+                    # if the previous image wasn't visible (transform_previous is None)
                         # reset the pose
-
+            
+            # set the previous image equal to the current image
 
         # publish the pose message
 
@@ -93,27 +95,32 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         information about this matrix. You should use your answer to the theory assignment to 
         help you here.
         """
-        translation_x_y = None
+        
+        # TODO: extract the translation information from the transform variable. Divide the 
+        # the x displacement by 320, which is the width of the camera resolution. Divide the
+        # y displacement by 240, the height of the camera resolution.
+        translation_x_y = None 
 
+        # TODO: use np.arctan2 and the transform variable to calculate the yaw
         yaw = None
-
+        
         return translation_x_y, yaw
 
 
-# ROS CALLBACK METHODS:
-#######################
-# TODO: Implement
+    # ROS CALLBACK METHODS:
+    #######################
+    # TODO: Implement
     def reset_callback(self, msg):
-        """ Reset the current position and orientation """
+        """ When this method is called, the position and orientation should be reset. """
         print "Resetting Phase"
 
 
-# TODO: Implement
+    # TODO: Implement
     def position_control_callback(self, msg):
-        ''' Store whether the pose is calculated and published '''
+        ''' Store whether the position control is turned on in an instance variable '''
         pass
 
-# TODO: Implement
+    # TODO: Implement
     def state_callback(self, msg):
         """
         Store z position (altitude) reading from State, along with most recent
