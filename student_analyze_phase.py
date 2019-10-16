@@ -46,11 +46,6 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
             # message type: PoseStamped
             # topic: /pidrone/picamera/pose
 
-        # TODO: create a publisher that publishes a boolean indicating whether the drone is lost or not
-            # message type: Bool
-            # topic: /pidrone/picamera/lost
-
-
         # Subscribers:
         # TODO: subscribe to /pidrone/reset_transform
             # message type: Empty
