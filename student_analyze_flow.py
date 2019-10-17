@@ -58,8 +58,13 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
         x = a['x']
         y = a['y']
 
-        # TODO: calculate the velocities by summing and scaling the flow vectors
-        #       using the flow_coeff and the altitude
+        # TODO: calculate the optical flow velocities by summing and scaling the flow vectors
+        opflow_x = ??? 
+        opflow_y = ??? 
+        
+        # Turn summed optical flow vectors into real-world velocities
+        x_motion = opflow_x * self.flow_coeff * self.altitude
+        y_motion = opflow_y * self.flow_coeff * self.altitude
 
         # TODO: Create a TwistStamped message, fill in the values you've calculated,
         #       and publish this using the publisher you've created in setup
