@@ -121,7 +121,7 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         # TODO: use np.arctan2 and the transform variable to calculate the yaw
         yaw = ???
         
-        return translation_x_y, yaw
+        return real_translation_x_y, yaw
 
 
     # ROS CALLBACK METHODS:
