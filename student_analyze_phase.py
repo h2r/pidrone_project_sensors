@@ -116,12 +116,12 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         
         real_translation_x_y = [0.0, 0.0]
         real_translation_x_y[0] = (pixel_translation_x_y[0] / 320.0) * self.altitude
-        real_translation_x_y[1] = (translation_x_y[1] / 240.0) * self.altitude
+        real_translation_x_y[1] = (pixel_translation_x_y[1] / 240.0) * self.altitude
 
         # TODO: use np.arctan2 and the transform variable to calculate the yaw
         yaw = ???
         
-        return translation_x_y, yaw
+        return real_translation_x_y, yaw
 
 
     # ROS CALLBACK METHODS:
