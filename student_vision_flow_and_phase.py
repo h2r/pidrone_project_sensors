@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-sys.path.insert(0, '/home/pi/ws/src/pidrone_pkg/scripts')
+sys.path.insert(0, '/home/duckiesky/ws/src/pidrone_pkg/scripts')
 import os
 import rospy
 import picamera

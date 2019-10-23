@@ -2,7 +2,7 @@
 
 import tf
 import sys
-sys.path.insert(0, '/home/pi/ws/src/pidrone_pkg/scripts')
+sys.path.insert(0, '/home/duckiesky/ws/src/pidrone_pkg/scripts')
 import yaml
 import rospy
 import rospkg
