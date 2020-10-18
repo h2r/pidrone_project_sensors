@@ -67,7 +67,6 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
             # reshape the image
             image = np.reshape(np.fromstring(data, dtype=np.uint8), (240, 320, 3))
             # If no first image is stored, store the image as the first image
-                # update the image variables
 
             # else
                 # try to estimate the transformation from the first image to the
