@@ -5,8 +5,8 @@ import os
 import rospy
 import picamera
 from sensor_msgs.msg import Image
-from student_analyze_flow import AnalyzeFlow
-from student_analyze_phase import AnalyzePhase
+from analyze_flow import AnalyzeFlow
+from analyze_phase import AnalyzePhase
 from cv_bridge import CvBridge
 
 
@@ -18,6 +18,7 @@ def main():
     # create a publisher to publish the raw image so that the web interface can
     # display the camera feed
     image_pub = rospy.Publisher("/pidrone/picamera/image_raw", Image, queue_size=1, tcp_nodelay=False)
+    first_image_pub = rospy.Publisher("/pidrone/picamera/first_image", Image, queue_size=1, latch=True)
 
     print "Vision started"
 
@@ -44,6 +45,9 @@ def main():
                         if phase_analyzer.previous_image is not None:
                             image_message = bridge.cv2_to_imgmsg(phase_analyzer.previous_image, encoding="bgr8")
                             image_pub.publish(image_message)
+                        if phase_analyzer.first_image is not None and phase_analyzer.new_first:
+                            image_message = bridge.cv2_to_imgmsg(phase_analyzer.first_image, encoding="bgr8")
+                            first_image_pub.publish(image_message)
                 # safely shutdown the camera recording for flow_analyzer
                 camera.stop_recording(splitter_port=1)
             # safely shutdown the camera recording for phase_analyzer

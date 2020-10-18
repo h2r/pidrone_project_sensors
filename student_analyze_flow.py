@@ -58,7 +58,7 @@ class AnalyzeFlow(picamera.array.PiMotionAnalysis):
         x = a['x']
         y = a['y']
 
-        # TODO: calculate the optical flow velocities by summing and scaling the flow vectors
+        # TODO: calculate the optical flow velocities by summing the flow vectors
         opflow_x = ??? 
         opflow_y = ??? 
         

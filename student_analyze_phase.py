@@ -38,6 +38,7 @@ class AnalyzePhase(picamera.array.PiMotionAnalysis):
         
         # var indicating whether we are taking our first image
         self.first = True
+        self.new_first = True
 
         # ROS Setup
         ###########

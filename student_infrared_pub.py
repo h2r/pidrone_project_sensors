@@ -4,7 +4,6 @@ sys.path.insert(0, '/home/duckiesky/ws/src/pidrone_pkg/scripts')
 import rospy
 import signal
 import Adafruit_ADS1x15
-from std_msgs.msg import Empty
 from sensor_msgs.msg import Range
 
 
@@ -91,7 +90,7 @@ def main():
     # Non-ROS Setup
     ###############
     # set the while loop frequency
-    r = rospy.Rate(100)
+    r = rospy.Rate(60)
     # set up the ctrl-c handler
     signal.signal(signal.SIGINT, ctrl_c_handler)
 
