@@ -253,9 +253,9 @@ class FlightController(object):
         self.imu_message.orientation.w = ???
 
         # TODO: update the IMU message angular velocities.
-        self.imu_message.??? = angvx
-        self.imu_message.??? = angvy
-        self.imu_message.??? = angvz
+        self.imu_message.??? = ang_vel_x_drone_body
+        self.imu_message.??? = ang_vel_y_drone_body
+        self.imu_message.??? = ang_vel_z_drone_body
         
         # TODO: update the IMU message linear accelerations.
         self.imu_message.linear_acceleration.x = ???
