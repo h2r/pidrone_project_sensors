@@ -12,11 +12,10 @@ from sensor_msgs.msg import Imu
 from h2rMultiWii import MultiWii
 from serial import SerialException
 from std_msgs.msg import Header, Empty
+from geometry_msgs.msg import Quaternion
 from pidrone_pkg.msg import Battery, Mode, RC, State
+from sensor_msgs.msg import Range
 import os
-
-# NOTE: you may need to change this import if you do not place your script in /pidrone_pkg/scripts/
-from fault_protector import FaultProtector
 
 
 class FlightController(object):
@@ -32,40 +31,26 @@ class FlightController(object):
     Subscribers:
     /pidrone/fly_commands
     /pidrone/desired/mode
+    /pidrone/heartbeat/range
     /pidrone/heartbeat/web_interface
-    /pidrone/infrared
+    /pidrone/heartbeat/pid_controller
     /pidrone/state
-
-    INFO: The drone has three modes - 'DISAMRED' 'ARMED' and 'FLYING'
-          The valid transitions are:
-
-                DISARMED <---> ARMED ---> FLYING
-                    ^                        |
-                    |                        |
-                    --------------------------
-
-
-    datasheet for imu on Naze32 Acro: http://invensense.tdk.com/wp-content/uploads/2020/06/PS-MPU-6500A-01-v1.3.pdf
     """
 
     def __init__(self):
         # Connect to the flight controller board
-        self.board = self.get_board()
+        self.board = self.getBoard()
         # stores the current and previous modes
-        self.curr_mode = 'DISARMED'  # initialize as disarmed
-        self.prev_mode = 'DISARMED'  # initialize as disarmed
+        self.curr_mode = 'DISARMED'         #initialize as disarmed
+        self.prev_mode = 'DISARMED'         #initialize as disarmed
         # store the command to send to the flight controller
-        self.command = cmds.disarm_cmd  # initialize as disarmed
+        self.command = cmds.disarm_cmd      #initialize as disarmed
+        self.last_command = cmds.disarm_cmd
         # store the mode publisher
         self.modepub = None
         # store the time for angular velocity calculations
         self.time = rospy.Time.now()
 
-        # import safe values
-        rospack = rospkg.RosPack()
-        path = rospack.get_path('pidrone_pkg')
-        with open("%s/params/thresholds.yaml" % path) as f:
-            self.thresholds = yaml.load(f)
 
         # Initialize the Imu Message
         ############################
@@ -89,12 +74,8 @@ class FlightController(object):
         self.battery_message.??? = None
         self.battery_message.??? = None
        
-
-       
-        # 3s battery safe discharge is 10.5V (3.5V per cell)
-        # but the flight control reads a little lower than actual
-        # minimum is 9V (3V per cell)
-        self.minimum_voltage = 10 
+        # Adjust this based on how low the battery should discharge
+        self.minimum_voltage = 4.5
 
         # Accelerometer parameters
         ##########################
@@ -102,38 +83,19 @@ class FlightController(object):
         path = rospack.get_path('pidrone_pkg')
         with open("%s/params/multiwii.yaml" % path) as f:
             means = yaml.load(f)
-        # 'means' are the average accelerometer readings when the drone is stable
-        # create a scalar from 1g to the accelerometer reading for the z-axis
-        # since we know that this reading corresponds with accel due to gravity (1g)
-        accel_due_to_gravity = 9.8  # m/s^2
-        self.accRawToMss = accel_due_to_gravity / means["az"]  # m/s^2/raw
-        self.accZeroX = means["ax"] * self.accRawToMss  # raw * m/s^2/raw = m/s^2
-        self.accZeroY = means["ay"] * self.accRawToMss  # raw * m/s^2/raw = m/s^2
-        self.accZeroZ = means["az"] * self.accRawToMss  # raw * m/s^2/raw = m/s^2
-        # Gyroscope parameters
-        ######################
-        # rad/s/raw (scalars to convert raw gyro to rad per second)
-        self.XGyroRawToRs = 0.0010569610567923715  # rad/s/raw
-        self.YGyroRawToRs = 0.0010533920049110032  # rad/s/raw
-        self.ZGyroRawToRs = 0.0010644278634753999  # rad/s/raw
-        self.gyroZeroX = means["gx"] * self.XGyroRawToRs  # raw * rad/s/raw = rad/s
-        self.gyroZeroY = means["gy"] * self.YGyroRawToRs  # raw * rad/s/raw = rad/s
-        self.gyroZeroZ = means["gz"] * self.ZGyroRawToRs  # raw * rad/s/raw = rad/s
-        # Safety
-        self.shutdown_reason = ""
+        self.accRawToMss = 9.8 / means["az"]
+        self.accZeroX = means["ax"] * self.accRawToMss
+        self.accZeroY = means["ay"] * self.accRawToMss
+        self.accZeroZ = means["az"] * self.accRawToMss
+
 
     # ROS subscriber callback methods:
     ##################################
     def desired_mode_callback(self, msg):
-        """ Set the current mode to the desired mode if the tranistion is valid
-        """
-        # FLYING to ARMED is not a valid transition
-        if (self.curr_mode == 'FLYING') and (msg.mode == 'ARMED'):
-            print("INFO: Cannot transition from FLYING to ARMED")
-        else:
-            self.prev_mode = self.curr_mode
-            self.curr_mode = msg.mode
-            self.update_command()
+        """ Set the current mode to the desired mode """
+        self.prev_mode = self.curr_mode
+        self.curr_mode = msg.mode
+        self.update_command()
 
     def fly_commands_callback(self, msg):
         """ Store and send the flight commands if the current mode is FLYING """
@@ -142,13 +104,13 @@ class FlightController(object):
             p = msg.pitch
             y = msg.yaw
             t = msg.throttle
-            self.command = [r, p, y, t]
+            self.command = [r,p,y,t]
 
     # Update methods:
     #################
     def update_imu_message(self):
         """
-        Compute the ROS IMU message by reading data from the flight controller.
+        Compute the ROS IMU message by reading data from the board.
         """
 
         # Extract roll, pitch, heading
@@ -262,6 +224,7 @@ class FlightController(object):
         self.imu_message.linear_acceleration.y = ???
         self.imu_message.linear_acceleration.z = ???
 
+
     def update_battery_message(self):
         """
         Compute the ROS battery message by reading data from the board.
@@ -275,14 +238,9 @@ class FlightController(object):
         self.battery_message.amperage = ??? 
 
 
-        # shutdown the Pi to prevent the battery from draining too low
-        if self.battery_message.vbat < self.thresholds["battery"]["min_voltage"]:
-            print("WARNING: The battery voltage is getting too low")
-            print("INFO: Shutting down")
-            os.system("echo 'bigbubba\n' | sudo -S shutdown -h now")
 
     def update_command(self):
-        """ Set command values if the mode is ARMED or DISARMED """
+        ''' Set command values if the mode is ARMED or DISARMED '''
         if self.curr_mode == 'DISARMED':
             self.command = cmds.disarm_cmd
         elif self.curr_mode == 'ARMED':
@@ -290,24 +248,23 @@ class FlightController(object):
                 self.command = cmds.arm_cmd
             elif self.prev_mode == 'ARMED':
                 self.command = cmds.idle_cmd
-            else:
-                self.command = cmds.disarm_cmd
-                print("INFO: Invalid mode transition from FLYING to ARMED")
 
     # Helper Methods:
     #################
-    def get_board(self):
+    def getBoard(self):
         """ Connect to the flight controller board """
-        # (if the flight control usb is unplugged and plugged back in,
+        # (if the flight cotroll usb is unplugged and plugged back in,
         #  it becomes .../USB1)
         try:
             board = MultiWii('/dev/ttyUSB0')
-        except SerialException:
+        except SerialException as e:
+            print("usb0 failed: " + str(e))
             try:
                 board = MultiWii('/dev/ttyUSB1')
             except SerialException:
-                print('\nCannot connect to the flight controller board.'
-                      'The USB is unplugged. Please check connection.')
+                print '\nCannot connect to the flight controller board.'
+                print 'The USB is unplugged. Please check connection.'
+                raise
                 sys.exit()
         return board
 
@@ -315,100 +272,144 @@ class FlightController(object):
         """ Send commands to the flight controller board """
         self.board.sendCMD(8, MultiWii.SET_RAW_RC, self.command)
         self.board.receiveDataPacket()
+        if (self.command != self.last_command):
+            print 'command sent:', self.command
+            self.last_command = self.command
+
+    def near_zero(self, n):
+        """ Set a number to zero if it is below a threshold value """
+        return 0 if abs(n) < 0.0001 else n
 
     def ctrl_c_handler(self, signal, frame):
         """ Disarm the drone and quits the flight controller node """
-        print("\nCaught ctrl-c! About to Disarm!")
-        self.desired_mode_callback(Mode('DISARMED'))
+        print "\nCaught ctrl-c! About to Disarm!"
+        self.board.sendCMD(8, MultiWii.SET_RAW_RC, cmds.disarm_cmd)
+        self.board.receiveDataPacket()
         rospy.sleep(1)
+        self.modepub.publish('DISARMED')
+        print "Successfully Disarmed"
         sys.exit()
+
+    # Heartbeat Callbacks: These update the last time that data was received
+    #                       from a node
+    def heartbeat_web_interface_callback(self, msg):
+        """Update web_interface heartbeat"""
+        self.heartbeat_web_interface = rospy.Time.now()
+
+    def heartbeat_pid_controller_callback(self, msg):
+        """Update pid_controller heartbeat"""
+        self.heartbeat_pid_controller = rospy.Time.now()
+
+    def heartbeat_infrared_callback(self, msg):
+        """Update ir sensor heartbeat"""
+        self.heartbeat_infrared = rospy.Time.now()
+
+    def heartbeat_state_estimator_callback(self, msg):
+        """Update state_estimator heartbeat"""
+        self.heartbeat_state_estimator = rospy.Time.now()
+
+    def shouldIDisarm(self):
+        """
+        Disarm the drone if the battery values are too low or if there is a
+        missing heartbeat
+        """
+        curr_time = rospy.Time.now()
+        disarm = False
+        if self.battery_message.vbat != None and self.battery_message.vbat < self.minimum_voltage:
+            print('\nSafety Failure: low battery\n')
+            disarm = False
+        if curr_time - self.heartbeat_web_interface > rospy.Duration.from_sec(3):
+            print('\nSafety Failure: web interface heartbeat\n')
+            print('The web interface stopped responding. Check your browser')
+            disarm = True
+        if curr_time - self.heartbeat_pid_controller > rospy.Duration.from_sec(1):
+            print('\nSafety Failure: not receiving flight commands.')
+            print('Check the pid_controller node\n')
+            disarm = True
+        if curr_time - self.heartbeat_infrared > rospy.Duration.from_sec(1):
+            print('\nSafety Failure: not receiving data from the IR sensor.')
+            print('Check the infrared node\n')
+            disarm = True
+        if curr_time - self.heartbeat_state_estimator > rospy.Duration.from_sec(1):
+            print('\nSafety Failure: not receiving a state estimate.')
+            print('Check the state_estimator node\n')
+            disarm = True
+
+        return disarm
 
 
 def main():
-
-    # Determine if the user wants to fly or just use the FC sensors
-    value = raw_input("Are you ready to fly? [y/n] ").lower()
-    if value == "y" or value == "yes":
-        sensors_only = False
-        print("INFO: Drone is ready to arm. \n")
-    else:
-        sensors_only = True
-        print("INFO: Entering sensors only mode.")
-        print("INFO: You will need to restart this script if you want to fly.\n")
-
     # ROS Setup
     ###########
     node_name = os.path.splitext(os.path.basename(__file__))[0]
     rospy.init_node(node_name)
 
-    # create the FlightController and FaultProtector objects
+    # create the FlightController object
     fc = FlightController()
-    fp = FaultProtector()
-
+    curr_time = rospy.Time.now()
+    fc.heartbeat_infrared = curr_time
+    fc.heartbeat_web_interface= curr_time
+    fc.heartbeat_pid_controller = curr_time
+    fc.heartbeat_flight_controller = curr_time
+    fc.heartbeat_state_estimator = curr_time
 
     # Publishers
     ###########
     imupub = rospy.Publisher('/pidrone/imu', Imu, queue_size=1, tcp_nodelay=False)
     batpub = rospy.Publisher('/pidrone/battery', Battery, queue_size=1, tcp_nodelay=False)
     fc.modepub = rospy.Publisher('/pidrone/mode', Mode, queue_size=1, tcp_nodelay=False)
-    print('Publishing:'
-          '\n/pidrone/imu'
-          '\n/pidrone/mode'
-          '\n/pidrone/battery')
+    print 'Publishing:'
+    print '/pidrone/imu'
+    print '/pidrone/mode'
+    print '/pidrone/battery'
 
     # Subscribers
     ############
     rospy.Subscriber("/pidrone/desired/mode", Mode, fc.desired_mode_callback)
     rospy.Subscriber('/pidrone/fly_commands', RC, fc.fly_commands_callback)
+    # heartbeat subscribers
+    rospy.Subscriber("/pidrone/range", Range, fc.heartbeat_infrared_callback)
+    rospy.Subscriber("/pidrone/heartbeat/web_interface", Empty, fc.heartbeat_web_interface_callback)
+    rospy.Subscriber("/pidrone/heartbeat/pid_controller", Empty, fc.heartbeat_pid_controller_callback)
+    rospy.Subscriber("/pidrone/state", State, fc.heartbeat_state_estimator_callback)
+
 
     signal.signal(signal.SIGINT, fc.ctrl_c_handler)
     # set the loop rate (Hz)
-    rate = rospy.Rate(60)
+    r = rospy.Rate(60)
     try:
         while not rospy.is_shutdown():
+            # if the current mode is anything other than disarmed
+            # preform as safety check
+            if fc.curr_mode != 'DISARMED':
+                # Break the loop if a safety check has failed
+                if fc.shouldIDisarm():
+                    break
+                
             # update and publish flight controller readings
             fc.update_battery_message()
             fc.update_imu_message()
             imupub.publish(fc.imu_message)
             batpub.publish(fc.battery_message)
 
-            if not sensors_only:
-                # if the current mode is anything other than disarmed
-                # preform as safety check
-                if fc.curr_mode != 'DISARMED':
-                    # Break the loop if a safety check has failed
-                    if fp.should_i_shutdown(mode=fc.curr_mode,
-                                            prev_mode=fc.prev_mode,
-                                            battery_voltage=fc.battery_message.vbat,
-                                            imu_msg=fc.imu_message):
-                        fc.shutdown_reason += fp.get_shutdown_cause()
-                        break
+            # update and send the flight commands to the board
+            fc.update_command()
+            fc.send_cmd()
 
-
-                # update and send the flight commands to the board
-                fc.update_command()
-                fc.send_cmd()
-
-                # publish the current mode of the drone
-                fc.modepub.publish(fc.curr_mode)
+            # publish the current mode of the drone
+            fc.modepub.publish(fc.curr_mode)
 
             # sleep for the remainder of the loop time
-            rate.sleep()
-
+            r.sleep()
+            
     except SerialException:
-        fc.shutdown_reason += ('\nERROR: Cannot connect to the flight controller board.'
-                              '\nThe USB is unplugged. Please check connection.')
-    except Exception:
-        # NOTE: if you're having errors swallowed, add a print statement here.
-
-        fc.board.sendCMD(8, MultiWii.SET_RAW_RC, cmds.disarm_cmd)
-        fc.board.receiveDataPacket()
-        rospy.sleep(1)
-        raise
-
+        print '\nCannot connect to the flight controller board.'
+        print 'The USB is unplugged. Please check connection.'
+    except:
+        print 'there was an internal error'
     finally:
-        print(fc.shutdown_reason)
-        print('INFO: Sending DISARM command')
+        print 'Shutdown received'
+        print 'Sending DISARM command'
         fc.board.sendCMD(8, MultiWii.SET_RAW_RC, cmds.disarm_cmd)
         fc.board.receiveDataPacket()
 

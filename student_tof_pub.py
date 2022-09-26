@@ -63,9 +63,9 @@ class ToFNode(object):
             ),
             radiation_type=Range.INFRARED,
             field_of_view=10,
-            min_range= 0, # FIXME,
-            max_range= 0, # FIXME,
-            range= 0 # FIXME
+            min_range= 0, # TODO,
+            max_range= 0, # TODO,
+            range= 0 # TODO
         )
         # publish
         self._pub.publish(msg)
