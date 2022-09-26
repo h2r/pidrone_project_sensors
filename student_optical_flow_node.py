@@ -33,6 +33,9 @@ class OpticalFlowNode(object):
         # subscribers
         self._sub_mv = rospy.Subscriber('/raspicam_node/motion_vectors', MotionVectors, self.motion_cb, queue_size=1)
         self._sub_alt = rospy.Subscriber('/pidrone/range', Range, self.altitude_cb, queue_size=1)
+        self.setup()
+
+    def setup(self):
 
         # ROS setup:
         ############
