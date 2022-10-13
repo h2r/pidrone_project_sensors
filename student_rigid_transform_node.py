@@ -157,8 +157,8 @@ class RigidTransformNode(object):
                     # calculate the x,y, and yaw translations from the transformation
                     translation_first, yaw_first = self.translation_and_yaw(transform_first)
                     # use an EMA filter to smooth the position and yaw values
-                    self.pose_msg.pose.position.x = translation_first[0]*self.altitude
-                    self.pose_msg.pose.position.y = translation_first[1]*self.altitude
+                    self.pose_msg.pose.position.x = translation_first[0]
+                    self.pose_msg.pose.position.y = translation_first[1].altitude
                     # With just a yaw, the x and y components of the
                     # quaternion are 0
                     _,_,z,w = tf.transformations.quaternion_from_euler(0,0,yaw_first)
