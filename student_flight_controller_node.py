@@ -173,6 +173,9 @@ class FlightController(object):
         raw_ang_vel_z = ???
 
         # Calculate the rotational rates
+        self.XGyroRawToRs = 0.0010569610567923715  # rad/s/raw
+        self.YGyroRawToRs = 0.0010533920049110032  # rad/s/raw
+        self.ZGyroRawToRs = 0.0010644278634753999  # rad/s/raw        
         ang_vel_x = raw_ang_vel_x * self.XGyroRawToRs - self.gyroZeroX
         ang_vel_y = raw_ang_vel_y * self.YGyroRawToRs - self.gyroZeroY
         ang_vel_z = raw_ang_vel_z * self.ZGyroRawToRs - self.gyroZeroZ
