@@ -173,9 +173,18 @@ class FlightController(object):
         raw_ang_vel_z = ???
 
         # Calculate the rotational rates
+
+
+        rospack = rospkg.RosPack()
+        path = rospack.get_path('pidrone_pkg')
+        with open("%s/params/multiwii.yaml" % path) as f:
+            means = yaml.load(f)        
         self.XGyroRawToRs = 0.0010569610567923715  # rad/s/raw
         self.YGyroRawToRs = 0.0010533920049110032  # rad/s/raw
-        self.ZGyroRawToRs = 0.0010644278634753999  # rad/s/raw        
+        self.ZGyroRawToRs = 0.0010644278634753999  # rad/s/raw
+        self.gyroZeroX = means["gx"] * self.XGyroRawToRs  # raw * rad/s/raw = rad/s
+        self.gyroZeroY = means["gy"] * self.YGyroRawToRs  # raw * rad/s/raw = rad/s
+        self.gyroZeroZ = means["gz"] * self.ZGyroRawToRs  # raw * rad/s/raw = rad/s
         ang_vel_x = raw_ang_vel_x * self.XGyroRawToRs - self.gyroZeroX
         ang_vel_y = raw_ang_vel_y * self.YGyroRawToRs - self.gyroZeroY
         ang_vel_z = raw_ang_vel_z * self.ZGyroRawToRs - self.gyroZeroZ
