@@ -79,7 +79,7 @@ class RigidTransformNode(object):
             
         
         # Subscribers
-        self._isub = rospy.Subscriber("/pidrone/picamera/image_compressed", CompressedImage, self.image_callback, queue_size=1)
+        self._isub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.image_callback, queue_size=1)
         self._sub_alt = rospy.Subscriber('/pidrone/range', Range, self.altitude_cb, queue_size=1)
 
         self.altitude = 0.03 # initialize to a bit off the ground
