@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from __future__ import division
+
 import rospy
 import numpy as np
 from geometry_msgs.msg import TwistStamped
@@ -55,9 +55,7 @@ class OpticalFlowNode(object):
         # TODO: subscribe to /raspicam_node/motion_vectors to extract the flow vectors for estimating velocity.
             # message type: MotionVectors
             # callback method: motion_cb
-
-
-
+        pass
 
     def motion_cb(self, msg):
         ''' Average the motion vectors and publish the
@@ -70,8 +68,8 @@ class OpticalFlowNode(object):
         # calculate the planar and yaw motions
 
         # TODO: calculate the optical flow velocities by summing the flow vectors
-        opflow_x = ??? 
-        opflow_y = ??? 
+        opflow_x = ... 
+        opflow_y = ... 
 
         
         x_motion = opflow_x * self.flow_coeff * self.altitude
@@ -96,8 +94,8 @@ class OpticalFlowNode(object):
             msg:  the message publishing the altitude
 
         """
-        self.altitude = ??
-        self.altitude_ts = ??
+        self.altitude = ...
+        self.altitude_ts = ...
     
 def main():
     optical_flow_node = OpticalFlowNode("optical_flow_node")
