@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import tf
 import time
 import cv2
@@ -13,6 +12,7 @@ from pidrone_pkg.msg import State
 from sensor_msgs.msg import Range
 from cv_bridge import CvBridge
 
+CAMERA_WIDTH_PIXELS, CAMERA_HEIGHT_PIXELS = 320, 240
 
 class RigidTransformNode(object):
     """
@@ -21,6 +21,12 @@ class RigidTransformNode(object):
     For more info, visit:
     https://docs.opencv.org/3.0-beta/modules/video/doc/motion_analysis_and_object_tracking.html#estimaterigidtransform
 
+    Publisher:
+    ~pose
+
+    Subscribers:
+    ~reset_transform
+    ~position_control
     """
     def __init__(self, node_name):
         # initialize the DTROS parent class
@@ -68,17 +74,19 @@ class RigidTransformNode(object):
         # TODO: subscribe to /pidrone/reset_transform
             # message type: Empty
             # callback method: reset_callback
+        self._rtsub = ...
 
         # TODO: subscribe to /pidrone/position_control
             # message type: Bool
             # callback method: position_control_callback
+        self._pcsub = ...
 
         # TODO: subscribe to /pidrone/state
             # message type: State
             # callback method: state_callback
-            
+        self._stsub = ...
         
-        # Subscribers
+        # Additional Subscribers
         self._isub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.image_callback, queue_size=1)
         self._sub_alt = rospy.Subscriber('/pidrone/range', Range, self.altitude_cb, queue_size=1)
 
@@ -157,8 +165,8 @@ class RigidTransformNode(object):
                     # calculate the x,y, and yaw translations from the transformation
                     translation_first, yaw_first = self.translation_and_yaw(transform_first)
                     # use an EMA filter to smooth the position and yaw values
-                    self.pose_msg.pose.position.x = translation_first[0]
-                    self.pose_msg.pose.position.y = translation_first[1].altitude
+                    self.pose_msg.pose.position.x = translation_first[0]*self.altitude
+                    self.pose_msg.pose.position.y = translation_first[1]*self.altitude
                     # With just a yaw, the x and y components of the
                     # quaternion are 0
                     _,_,z,w = tf.transformations.quaternion_from_euler(0,0,yaw_first)
@@ -168,7 +176,7 @@ class RigidTransformNode(object):
                     self.first_image_counter += 1
                     self.max_first_counter = max(self.max_first_counter, self.first_image_counter)
                     self.last_first_time = rospy.get_time()
-                    print("count:", self.first_image_counter)
+                    print(("count:", self.first_image_counter))
                 # else the first image was not visible (the transformation was not succesful) :
                 else:
                     # try to estimate the transformation from the previous image
@@ -181,17 +189,18 @@ class RigidTransformNode(object):
                         if self.last_first_time is None:
                             self.last_first_time = rospy.get_time()
                         time_since_first = rospy.get_time() - self.last_first_time
-                        print("integrated", time_since_first)
-                        print("max_first_counter: ", self.max_first_counter)
-
+                        print(("integrated", time_since_first))
+                        print(("max_first_counter: ", self.max_first_counter))
                         int_displacement, yaw_previous = self.translation_and_yaw(transform_previous)
+                        
                         # TODO calculate the position by adding the displacement to the previous
                         # position of the drone.
+                        
                         # HINT: use self.x_position_from_state and self.y_position_from_state as the
                         # previous position
 
-                        self.pose_msg.pose.position.x = self.x_position_from_state + ???
-                        self.pose_msg.pose.position.y = self.y_position_from_state + ???
+                        self.pose_msg.pose.position.x = self.x_position_from_state + ...
+                        self.pose_msg.pose.position.y = self.y_position_from_state + ...
                         
                         
                         
@@ -238,14 +247,14 @@ class RigidTransformNode(object):
         # TODO: extract the translation information from the transform variable. Divide the 
         # the x displacement by 320, which is the width of the camera resolution. Divide the
         # y displacement by 240, the height of the camera resolution.
-        pixel_translation_x_y = ??? 
+        pixel_translation_x_y = ... 
         
         real_translation_x_y = [0.0, 0.0]
-        real_translation_x_y[0] = (pixel_translation_x_y[0] / 320.0) * self.altitude
-        real_translation_x_y[1] = (pixel_translation_x_y[1] / 240.0) * self.altitude
+        real_translation_x_y[0] = (pixel_translation_x_y[0] / CAMERA_WIDTH_PIXELS) * self.altitude
+        real_translation_x_y[1] = (pixel_translation_x_y[1] / CAMERA_HEIGHT_PIXELS) * self.altitude
 
         # TODO: use np.arctan2 and the transform variable to calculate the yaw
-        yaw = ???
+        yaw = ...
         
         return real_translation_x_y, yaw
 
@@ -253,6 +262,7 @@ class RigidTransformNode(object):
     # ROS CALLBACK METHODS:
     #######################
     # TODO: Implement
+
     def reset_callback(self, msg):
         """ Reset the current position and orientation """
         print("Resetting Phase")
